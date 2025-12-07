@@ -2,6 +2,26 @@
 
 This document contains solutions to common problems you might encounter when working with the Badge Firmware project.
 
+## Table of Contents
+
+- [Build Issues](#build-issues)
+  - [`idf.py fullclean` Error](#idfpy-fullclean-error)
+  - [Switching Between Firmware Variants](#switching-between-firmware-variants)
+  - [`mpy-cross` Related Errors](#mpy-cross-related-errors)
+  - [Python Virtual Environment Issues](#python-virtual-environment-issues)
+- [Development Issues](#development-issues)
+  - [Testing Errors](#testing-errors)
+  - [Connection Issues with Multiple Devices](#connection-issues-with-multiple-devices)
+- [Hardware Issues](#hardware-issues)
+  - [Display Not Working](#display-not-working)
+  - [Button Input Not Responding](#button-input-not-responding)
+- [General Troubleshooting Tips](#general-troubleshooting-tips)
+  - [Clean Build](#clean-build)
+  - [Environment Variables](#environment-variables)
+  - [Submodule Issues](#submodule-issues)
+  - [Permission Issues](#permission-issues)
+- [Getting Additional Help](#getting-additional-help)
+
 ## Build Issues
 
 ### `idf.py fullclean` Error
@@ -32,6 +52,27 @@ make clean
 ```
 
 This error typically occurs when there's a mismatch between Python environments used for ESP-IDF configuration.
+
+### Switching Between Firmware Variants
+
+**Problem:** Building minimal firmware after normal firmware (or vice versa) succeeds, but when deploying the firmware it appears unchanged - the wrong variant is running on the badge.
+
+**Solution:**
+
+Always run `make clean` between different firmware builds:
+
+```bash
+# Building normal firmware first
+make build_firmware
+
+# Clean before switching to minimal
+make clean
+
+# Now build minimal firmware
+FW_TYPE=minimal make build_firmware
+```
+
+This ensures that build artifacts from one firmware type don't interfere with the other. Without cleaning, the build system may reuse cached components from the previous variant, resulting in a hybrid or incorrect firmware binary.
 
 ### `mpy-cross` Related Errors
 
