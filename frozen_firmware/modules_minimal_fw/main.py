@@ -22,6 +22,11 @@ print("Disobey 2026")
 print(f"Version: {Version().version}")
 print(f"Build: {Version().build}")
 print(f"Firmware type: minimal")
+print(f"")
+print(f"Global variables and objects available:")
+print(f"  - 'config': Config() object with firmware version info")
+print(f"")
+print(f"Check also Badge API documentation in Github")
 
 # Acknowledge OTA was successful and rollback is not needed as we've booted successfully
 boot_partition = ota_status.boot_ota()
@@ -35,6 +40,7 @@ def main():
     ButtonEvents.init(BtnConfig)
 
     Config.load()
+    globals()["config"] = Config()
 
     sta = network.WLAN(network.STA_IF)
 

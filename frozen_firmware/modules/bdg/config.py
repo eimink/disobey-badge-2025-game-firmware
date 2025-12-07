@@ -76,3 +76,69 @@ class Config:
             },
         }
         return Config.config
+
+    @staticmethod
+    def set_wifi(ssid: str, key: str) -> None:
+        """Set WiFi credentials and save to /config.json
+        
+        Args:
+            ssid: WiFi SSID (network name)
+            key: WiFi password/key
+        """
+        # Update the in-memory config
+        if "ota" not in Config.config:
+            Config.config["ota"] = {}
+        if "wifi" not in Config.config["ota"]:
+            Config.config["ota"]["wifi"] = {}
+        
+        Config.config["ota"]["wifi"]["ssid"] = ssid
+        Config.config["ota"]["wifi"]["password"] = key
+        
+        # Save to /config.json
+        try:
+            with open("/config.json", "w") as f:
+                ujson.dump(Config.config, f)
+            print(f"WiFi config saved: SSID={ssid}")
+        except OSError as e:
+            print(f"Error saving config: {e}")
+            raise
+    
+    @staticmethod
+    def set_nick(nick: str) -> None:
+        """Set nickname and save to /config.json
+        
+        Validates that nickname contains only ASCII characters and is 1-20 characters long.
+        Non-ASCII characters will cause a ValueError.
+        
+        Args:
+            nick: Nickname (1-20 ASCII characters)
+            
+        Raises:
+            ValueError: If nickname is empty, too long, or contains non-ASCII characters
+        """
+        # Validate length
+        if not nick or len(nick) < 1:
+            raise ValueError("Nickname must be at least 1 character")
+        if len(nick) > 20:
+            raise ValueError("Nickname must be 20 characters or less")
+        
+        # Validate ASCII only
+        try:
+            nick.encode('ascii')
+        except UnicodeEncodeError:
+            raise ValueError("Nickname must contain only ASCII characters")
+        
+        # Update the in-memory config
+        if "espnow" not in Config.config:
+            Config.config["espnow"] = {}
+        
+        Config.config["espnow"]["nick"] = nick
+        
+        # Save to /config.json
+        try:
+            with open("/config.json", "w") as f:
+                ujson.dump(Config.config, f)
+            print(f"Nickname saved: {nick}")
+        except OSError as e:
+            print(f"Error saving config: {e}")
+            raise
