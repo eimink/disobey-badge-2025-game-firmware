@@ -62,6 +62,9 @@ Then use `make repl_with_firmware_dir` on your host to connect to the badge.
 ```bash
 # Inside the Dev Container
 make build_firmware
+
+# Deploy firmware outside of Dev container
+make deploy
 ```
 
 If you encounter issues, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for solutions.
