@@ -540,6 +540,41 @@ class GameScreen(Screen):
 
 ## Testing and Debugging
 
+### Quick Testing with REPL
+
+The fastest way to test your game during development:
+
+```bash
+# 1. Start REPL with firmware directory mounted
+make repl_with_firmware_dir
+
+# 2. Soft reboot to initialize (Ctrl+D)
+# Badge will boot and show the main screen
+
+# 3. Use load_app() to quickly load your game
+>>> load_app("badge.games.reaction_game", "ReactionGameScr", args=(None, True))
+>>> load_app("badge.games.tictac", "TicTacToe", with_espnow=True, args=(None,))
+>>> load_app("bdg.screens.ota", "OTAScreen", with_espnow=True, with_sta=True,
+...          kwargs={"fw_version": "1.0.0", "ota_config": config.config["ota"]})
+
+# 4. Test, close screen (Ctrl+C or use in-game close)
+# 5. Load again for quick iteration
+>>> load_app("badge.games.your_game", "YourGameScreen")
+```
+
+**load_app() parameters:**
+- `import_path`: Module path like `"badge.games.your_game"` or `"bdg.games.something"`
+- `class_name`: Screen class name (optional - will auto-detect if omitted)
+- `with_espnow`: Prepend espnow instance to args (for multiplayer games)
+- `with_sta`: Prepend network station instance to args
+- `args`: Additional positional arguments as tuple
+- `kwargs`: Keyword arguments as dict
+- `mode`: Screen mode (`Screen.STACK`, `Screen.REPLACE`, or `Screen.MODAL`)
+
+The `load_app()` function automatically initializes all required badge components (buttons, network, display) if not already initialized, so you can use it immediately after boot.
+
+**Note:** For multiplayer games that require connection between two badges, the workflow for using `load_app()` to establish connections needs to be tested and documented. Currently, `load_app()` works well for single-player testing and casual modes.
+
 ### Development Testing
 
 ```python
