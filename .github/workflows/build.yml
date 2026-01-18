@@ -14,6 +14,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     
+    outputs:
+      is_release: ${{ steps.is_release.outputs.is_release }}
+      tag_name: ${{ steps.is_release.outputs.tag_name }}
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -50,10 +54,6 @@ jobs:
             echo "is_release=false" >> $GITHUB_OUTPUT
             echo "This is not a release build"
           fi
-    
-    outputs:
-      is_release: ${{ steps.is_release.outputs.is_release }}
-      tag_name: ${{ steps.is_release.outputs.tag_name }}
       
       - name: Set up Python
         if: steps.check_tag.outputs.skip_build != 'true'
