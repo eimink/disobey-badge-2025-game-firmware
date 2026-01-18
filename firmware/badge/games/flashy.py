@@ -20,16 +20,13 @@ class Flashy(Screen):
         # Optional: customize the focus border color
         color_map[FOCUS] = GREEN
 
-        # Writer for big text (title)
-        self.wri_title = CWriter(ssd, font14, GREEN, BLACK, verbose=False)
-
         # Writer for big text (nick)
         self.wri_nick = CWriter(ssd, font14, GREEN, BLACK, verbose=False)
 
         # Writer for buttons (smaller font)
         self.wri_btn = CWriter(ssd, arial10, GREEN, BLACK, verbose=False)
         
-        # Read nick from config (safe)
+        # Read nick from config 
         nick = Config.config.get("espnow", {}).get("nick", "ANONYMOUS")
 
 
