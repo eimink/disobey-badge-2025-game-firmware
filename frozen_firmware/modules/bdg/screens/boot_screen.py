@@ -38,8 +38,8 @@ class BootScr(Screen):
         self.show(True)
         self.reg_task(self.next_scr(), False)
 
-        # Import global_buttons and new_con_cb from bdg
-        from bdg import global_buttons, new_con_cb
+        # Import global_buttons and new_con_cb from bdg.utils
+        from bdg.utils import global_buttons, new_con_cb
 
         self.reg_task(global_buttons(self.espnow, self.sta), False)
 
