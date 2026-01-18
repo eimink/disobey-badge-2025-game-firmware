@@ -94,27 +94,26 @@ BUMP_TYPE ?= patch
 bump_version:
 	@echo "Bumping $(BUMP_TYPE) version..."
 	@./scripts/bump_version.sh $(BUMP_TYPE)
+	@NEW_VERSION=$$(cat frozen_fs/VERSION) && \
+	echo "Committing version $$NEW_VERSION..." && \
+	git add frozen_fs/VERSION && \
+	git commit -m "Release $$NEW_VERSION" && \
+	echo "Creating tag: $$NEW_VERSION" && \
+	git tag -a "$$NEW_VERSION" -m "Release $$NEW_VERSION" && \
+	echo "✅ Version bumped and tagged: $$NEW_VERSION"
 
 # Release process: bump version, commit, tag, and build firmware
 # Usage: make release BUMP_TYPE=minor (defaults to patch)
-# Note: This only creates a LOCAL tag. Use 'git push --tags' to publish.
+# Note: Tags are LOCAL until you push. Use 'git push origin main --tags' to publish.
 release: bump_version
-	@echo "=== Starting Release Process ==="
+	@echo "=== Starting Release Build ==="
 	@NEW_VERSION=$$(cat frozen_fs/VERSION) && \
-	echo "New version: $$NEW_VERSION" && \
-	git add frozen_fs/VERSION && \
-	git commit -m "Release $$NEW_VERSION" && \
-	GIT_SHA=$$(git rev-parse --short HEAD) && \
-	TAG_NAME="$$NEW_VERSION-$$GIT_SHA" && \
-	echo "Creating tag: $$TAG_NAME" && \
-	git tag -a "$$TAG_NAME" -m "Release $$TAG_NAME" && \
-	echo "Building firmware with tag $$TAG_NAME..." && \
+	echo "Building firmware for $$NEW_VERSION..." && \
 	$(MAKE) clean && \
 	$(MAKE) build_firmware FW_TYPE=normal && \
 	echo "" && \
 	echo "=== Release Complete ===" && \
 	echo "Version: $$NEW_VERSION" && \
-	echo "Tag: $$TAG_NAME" && \
 	echo "Artifacts:" && \
 	ls -lh dist/ && \
 	echo "" && \
@@ -122,5 +121,5 @@ release: bump_version
 	echo "  git push origin main --tags" && \
 	echo "" && \
 	echo "To undo this release (if testing):" && \
-	echo "  git tag -d $$TAG_NAME" && \
+	echo "  git tag -d $$NEW_VERSION" && \
 	echo "  git reset --hard HEAD~1"
