@@ -147,4 +147,8 @@ class OtaUpdater:
             self.json = resp.json()
 
     def fw_url(self, path):
+        # If path is already a full URL, return as-is
+        if path.startswith("http"):
+            return path
+        # Otherwise, prepend the host
         return f"{self.host}{path}"
