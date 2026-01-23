@@ -1,19 +1,18 @@
 import asyncio
 
 from bdg.game_registry import init_game_registry, get_registry
-import gui.fonts.freesans20 as font
+from gui.fonts import freesans20, font10
 from gui.core.colors import *
 from gui.core.ugui import Screen, ssd, quiet
 from gui.core.writer import CWriter
 from bdg.utils import blit
-from images import boot as screen1
 
-from gui.widgets import Label, Button, CloseButton, Listbox
+from gui.widgets import Label, Button, Listbox
+from bdg.widgets.hidden_active_widget import HiddenActiveWidget
 from bdg.badge_game import GameLobbyScr
 from bdg.screens.ota import OTAScreen
 from bdg.config import Config
 from bdg.version import Version
-
 
 class OptionScreen(Screen):
     sync_update = True  # set screen update mode synchronous
@@ -21,7 +20,8 @@ class OptionScreen(Screen):
     def __init__(self, espnow = None, sta = None):
         super().__init__()
         # verbose default indicates if fast rendering is enabled
-        wri = CWriter(ssd, font, GREEN, BLACK, verbose=False)
+        wri = CWriter(ssd, freesans20, GREEN, BLACK, verbose=False)
+        wri_pink = CWriter(ssd, font10, D_PINK, BLACK, verbose=False)
         self.els = [
             "Home",
             "Firmware update",
@@ -37,23 +37,30 @@ class OptionScreen(Screen):
         for game in solo_games:
             self.els.append(game.get("title", "Unknown Game"))
 
-        self.lb = Listbox(
+                
+        self.lbl_w = Label(
             wri,
+            10,
+            2,
+            316,
+            bdcolor=False,
+            justify=Label.CENTRE,
+        )
+        self.lbl_w.value("Menu")
+        self.lb = Listbox(
+            wri_pink,
             50,
-            50,
+            2,
+            width=316,
             elements=self.els,
-            dlines=3,
-            bdcolor=RED,
+            dlines=6,
             value=1,
+            bdcolor=D_PINK,
             callback=self.lbcb,
             also=Listbox.ON_LEAVE,
         )
 
-        # Test of movable sprite object with disobey (:
-        # self.sprite = Sprite(wri, 40, 150, sprite)
-        # self.sprite.visible = False  # update_sprite task will take over.
-
-        CloseButton(wri)  # Quit the application
+        HiddenActiveWidget(wri) 
 
     def on_open(self):
         # register callback that will make new connection dialog to pop up
@@ -64,12 +71,7 @@ class OptionScreen(Screen):
         pass
 
     def after_open(self):
-        # copy_img_to_mvb('screen1.bin', ssd)
-        #blit(ssd, screen1, 0, 0)  # show background
-        self.show(True)  #
-        # self.sprite.capture_bg()  #  capture new background for sprite
-        # task will set sprite visible
-        # self.reg_task(self.update_sprite(), True)
+        self.show(True) 
 
     async def update_sprite(self):
         # example of using sprite
