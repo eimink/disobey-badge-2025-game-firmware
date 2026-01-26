@@ -113,9 +113,8 @@ class ScannerScreen(Screen):
             50,
             2,
             elements=self.elements,
-            dlines=7,
+            dlines=6,
             bdcolor=D_PINK,
-            value=1,
             also=Listbox.ON_LEAVE,
             width=316,
         )
