@@ -11,7 +11,7 @@ from bdg.widgets.hidden_active_widget import HiddenActiveWidget
 from bdg.screens.scan_screen import ScannerScreen
 from bdg.screens.solo_games_screen import SoloGamesScreen
 from bdg.game_registry import get_registry
-from gui.core.colors import GREEN, BLACK, D_PINK, WHITE, D_GREEN, D_RED, FOCUS, color_map
+from gui.core.colors import GREEN, BLACK, D_PINK, WHITE, D_GREEN, D_RED
 from gui.core.ugui import Screen, ssd
 from gui.core.writer import CWriter
 from gui.fonts import arial35, freesans20, font10 as font10
@@ -77,7 +77,6 @@ class GameLobbyScr(Screen):
 
     def __init__(self):
         super().__init__()
-        color_map[FOCUS] = WHITE  # Set focus color to white
         self.game = BadgeGame()
         # verbose default indicates if fast rendering is enabled
         wri = CWriter(ssd, font10, WHITE, BLACK, verbose=False)
@@ -96,6 +95,12 @@ class GameLobbyScr(Screen):
         registry = get_registry()
         multiplayer_games = [g for g in registry.get_all_games() if g.get("multiplayer", False)]
         has_multiplayer = len(multiplayer_games) > 0
+        
+        # Check if there are solo games available
+        solo_games = [g for g in registry.get_all_games() if not g.get("multiplayer", False)]
+        has_solo = len(solo_games) > 0
+        
+        print(f"GameLobbyScr: {len(multiplayer_games)} multiplayer games, {len(solo_games)} solo games")
 
         # Multi button (left side) - opens ScannerScreen for multiplayer
         def multi_cb(button):
@@ -120,6 +125,7 @@ class GameLobbyScr(Screen):
 
         # Solo button (right side) - will open SoloGamesScreen
         def solo_cb(button):
+            print("Solo button pressed - opening SoloGamesScreen")
             Screen.change(SoloGamesScreen)
 
         self.solo_btn = Button(
@@ -134,6 +140,10 @@ class GameLobbyScr(Screen):
             textcolor=D_PINK,
             width=110,
         )
+        
+        # Disable Solo button if no solo games available
+        if not has_solo:
+            self.solo_btn.greyed_out(True)
 
     def after_open(self):
         self.update_nickname()

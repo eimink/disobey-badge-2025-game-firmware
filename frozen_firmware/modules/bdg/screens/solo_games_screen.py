@@ -1,6 +1,6 @@
 import asyncio
 from bdg.game_registry import get_registry
-from gui.core.colors import GREEN, BLACK, D_PINK, color_map
+from gui.core.colors import GREEN, BLACK, D_PINK
 from gui.core.ugui import Screen, ssd
 from gui.core.writer import CWriter
 from gui.fonts import font10, freesans20
@@ -14,7 +14,6 @@ class SoloGamesScreen(Screen):
     
     def __init__(self):
         super().__init__()
-        color_map[FOCUS] = BLACK 
         
         # Title writer with freesans20 font
         wri = CWriter(ssd, freesans20, GREEN, BLACK, verbose=False)

@@ -151,7 +151,6 @@ class ScannerScreen(Screen):
 
     def rebuild_list(self):
         """Rebuild the badge list from NowListener.last_seen."""
-        comp = "C"
         
         # Get all current badges from NowListener
         current_badges = list(NowListener.last_seen.values())
@@ -166,7 +165,7 @@ class ScannerScreen(Screen):
             # Build new elements from current badges
             new_elements = [
                 (
-                    f"[{comp}] {badge.nick} [{badge.rssi}dBm]",
+                    f"{badge.nick} [{badge.rssi}dBm]",
                     self.cb,
                     (badge,),
                 )
