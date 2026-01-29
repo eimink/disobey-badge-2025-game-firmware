@@ -97,6 +97,9 @@ jobs:
         run: |
           cp micropython/ports/esp32/build-ESP32_GENERIC_S3-DEVKITW2/firmware.bin dist/full_firmware.bin || true
           cp micropython/ports/esp32/build-ESP32_GENERIC_S3-DEVKITW2/micropython.bin dist/ota_firmware.bin || true
+          cp micropython/ports/esp32/build-ESP32_GENERIC_S3-DEVKITW2/bootloader/bootloader.bin dist/bootloader.bin || true
+          cp micropython/ports/esp32/build-ESP32_GENERIC_S3-DEVKITW2/partition_table/partition-table.bin dist/partition-table.bin || true
+          cp micropython/ports/esp32/build-ESP32_GENERIC_S3-DEVKITW2/ota_data_initial.bin dist/ota_data_initial.bin || true
       
       - name: Upload firmware artifacts
         uses: actions/upload-artifact@v4
@@ -105,6 +108,9 @@ jobs:
           path: |
             dist/full_firmware.bin
             dist/ota_firmware.bin
+            dist/bootloader.bin
+            dist/partition-table.bin
+            dist/ota_data_initial.bin
           retention-days: 30
           if-no-files-found: warn
       
@@ -155,8 +161,7 @@ jobs:
           chmod +x scripts/upload_firmware_to_s3.sh
           ./scripts/upload_firmware_to_s3.sh \
             "${TAG_NAME}" \
-            "dist/full_firmware.bin" \
-            "dist/ota_firmware.bin" \
+            "dist" \
             "${S3_BUCKET}" \
             "${S3_ENDPOINT}"
       

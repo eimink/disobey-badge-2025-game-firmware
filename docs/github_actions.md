@@ -22,6 +22,11 @@ This single unified workflow handles both regular builds and releases.
 
 **Additional steps for tagged builds:**
 - Uploads firmware to S3-compatible storage (uocloud.com)
+  - `full_firmware.bin` - Complete firmware image (includes bootloader + partition table + micropython.bin)
+  - `ota_firmware.bin` - OTA update firmware (micropython.bin only)
+  - `bootloader.bin` - ESP32 bootloader
+  - `partition-table.bin` - Partition table
+  - `ota_data_initial.bin` - Initial OTA data
 - Updates ota.json with version info (URL, SHA256, size)
 
 **Caching Strategy:**
