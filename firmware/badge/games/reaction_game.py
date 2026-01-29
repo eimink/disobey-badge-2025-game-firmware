@@ -15,8 +15,8 @@ DIS_RED = create_color(13, 210, 0, 0)
 DIS_PINK = create_color(14, 240, 0, 240)
 # c: color, hc: highlight color
 GAME_BTN_COLORS = [
-    {"hc": GREEN, "c": LIGHTGREEN, "btn": "btn_select"},
-    {"hc": BLUE, "c": DARKBLUE, "btn": "btn_start"},
+    {"hc": GREEN, "c": LIGHTGREEN, "btn": "btn"},
+    {"hc": BLUE, "c": DARKBLUE, "btn": "btn_select"},
     {"hc": YELLOW, "c": DARKYELLOW, "btn": "btn_a"},
     {"hc": RED, "c": LIGHTRED, "btn": "btn_b"},
 ]
@@ -157,8 +157,8 @@ class ReactionGameScr(Screen):
                 ("btn_a", ButAct.ACT_PRESS),
                 ("btn_b", ButAct.ACT_PRESS),
                 ("btn_b", ButAct.ACT_LONG),
-                ("btn_l", ButAct.ACT_PRESS),
-                ("btn_r", ButAct.ACT_PRESS),
+                ("btn_select", ButAct.ACT_PRESS),
+                ("btn_start", ButAct.ACT_PRESS),
             ]
         )
         self.be = ButtonEvents(ev_subset)
@@ -188,7 +188,7 @@ class ReactionGameScr(Screen):
             seed = 1
 
         if not self.game:
-            self.game = RGame(seed, 20)
+            self.game = RGame(seed)
 
         if not self.gt or self.gt.done():
             self.gt = self.reg_task(self.cont_sqnc(), True)
@@ -218,6 +218,7 @@ class ReactionGameScr(Screen):
             print("game over")
             self.gs = self.STATE_GAME_OVER
             # self.lbl_result.value(text=f"{go.reason} p:{go.points}")
+        
 
     async def btn_cb(self, btn_idx):
         print(f"game state: {self.gs} {btn_idx=}")
@@ -273,7 +274,7 @@ class ReactionGameScr(Screen):
 
 
 class RGame:
-    def __init__(self, seed: int, size: int = 200):
+    def __init__(self, seed: int, size: int = 300):
         random.seed(seed)
 
         self.sqnc = [random.randint(0, 3) for _ in range(size)]
