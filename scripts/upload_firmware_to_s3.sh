@@ -22,9 +22,6 @@ fi
 # Define all firmware files in dist directory
 FULL_FW="${DIST_DIR}/full_firmware.bin"
 OTA_FW="${DIST_DIR}/ota_firmware.bin"
-BOOTLOADER="${DIST_DIR}/bootloader.bin"
-PARTITION_TABLE="${DIST_DIR}/partition-table.bin"
-OTA_DATA_INITIAL="${DIST_DIR}/ota_data_initial.bin"
 
 # Check required files
 if [ ! -f "$FULL_FW" ]; then
@@ -46,9 +43,6 @@ echo ""
 echo "Files to upload:"
 echo "  - full_firmware.bin: $([ -f "$FULL_FW" ] && du -h "$FULL_FW" | cut -f1 || echo "not found")"
 echo "  - ota_firmware.bin: $([ -f "$OTA_FW" ] && du -h "$OTA_FW" | cut -f1 || echo "not found")"
-echo "  - bootloader.bin: $([ -f "$BOOTLOADER" ] && du -h "$BOOTLOADER" | cut -f1 || echo "not found")"
-echo "  - partition-table.bin: $([ -f "$PARTITION_TABLE" ] && du -h "$PARTITION_TABLE" | cut -f1 || echo "not found")"
-echo "  - ota_data_initial.bin: $([ -f "$OTA_DATA_INITIAL" ] && du -h "$OTA_DATA_INITIAL" | cut -f1 || echo "not found")"
 
 # Extract hostname from endpoint URL
 S3_HOST=$(echo "${S3_ENDPOINT}" | sed 's|https://||' | sed 's|http://||')
@@ -79,37 +73,6 @@ s3cmd --access_key="${S3_ACCESS_KEY_ID}" \
     put "$OTA_FW" \
     s3://${S3_BUCKET}/firmware/${VERSION}/ota_firmware.bin
 
-# Upload additional firmware files if they exist
-if [ -f "$BOOTLOADER" ]; then
-    echo "Uploading bootloader.bin to firmware/${VERSION}/"
-    s3cmd --access_key="${S3_ACCESS_KEY_ID}" \
-        --secret_key="${S3_SECRET_ACCESS_KEY}" \
-        --host="${S3_HOST}" \
-        --host-bucket='%(bucket)s.'"${S3_HOST}" \
-        put "$BOOTLOADER" \
-        s3://${S3_BUCKET}/firmware/${VERSION}/bootloader.bin
-fi
-
-if [ -f "$PARTITION_TABLE" ]; then
-    echo "Uploading partition-table.bin to firmware/${VERSION}/"
-    s3cmd --access_key="${S3_ACCESS_KEY_ID}" \
-        --secret_key="${S3_SECRET_ACCESS_KEY}" \
-        --host="${S3_HOST}" \
-        --host-bucket='%(bucket)s.'"${S3_HOST}" \
-        put "$PARTITION_TABLE" \
-        s3://${S3_BUCKET}/firmware/${VERSION}/partition-table.bin
-fi
-
-if [ -f "$OTA_DATA_INITIAL" ]; then
-    echo "Uploading ota_data_initial.bin to firmware/${VERSION}/"
-    s3cmd --access_key="${S3_ACCESS_KEY_ID}" \
-        --secret_key="${S3_SECRET_ACCESS_KEY}" \
-        --host="${S3_HOST}" \
-        --host-bucket='%(bucket)s.'"${S3_HOST}" \
-        put "$OTA_DATA_INITIAL" \
-        s3://${S3_BUCKET}/firmware/${VERSION}/ota_data_initial.bin
-fi
-
 # Upload as "latest" for easy access
 echo "Uploading full_firmware.bin to firmware/latest/"
 s3cmd --access_key="${S3_ACCESS_KEY_ID}" \
@@ -126,37 +89,6 @@ s3cmd --access_key="${S3_ACCESS_KEY_ID}" \
     --host-bucket='%(bucket)s.'"${S3_HOST}" \
     put "$OTA_FW" \
     s3://${S3_BUCKET}/firmware/latest/ota_firmware.bin
-
-# Upload additional firmware files to latest/ if they exist
-if [ -f "$BOOTLOADER" ]; then
-    echo "Uploading bootloader.bin to firmware/latest/"
-    s3cmd --access_key="${S3_ACCESS_KEY_ID}" \
-        --secret_key="${S3_SECRET_ACCESS_KEY}" \
-        --host="${S3_HOST}" \
-        --host-bucket='%(bucket)s.'"${S3_HOST}" \
-        put "$BOOTLOADER" \
-        s3://${S3_BUCKET}/firmware/latest/bootloader.bin
-fi
-
-if [ -f "$PARTITION_TABLE" ]; then
-    echo "Uploading partition-table.bin to firmware/latest/"
-    s3cmd --access_key="${S3_ACCESS_KEY_ID}" \
-        --secret_key="${S3_SECRET_ACCESS_KEY}" \
-        --host="${S3_HOST}" \
-        --host-bucket='%(bucket)s.'"${S3_HOST}" \
-        put "$PARTITION_TABLE" \
-        s3://${S3_BUCKET}/firmware/latest/partition-table.bin
-fi
-
-if [ -f "$OTA_DATA_INITIAL" ]; then
-    echo "Uploading ota_data_initial.bin to firmware/latest/"
-    s3cmd --access_key="${S3_ACCESS_KEY_ID}" \
-        --secret_key="${S3_SECRET_ACCESS_KEY}" \
-        --host="${S3_HOST}" \
-        --host-bucket='%(bucket)s.'"${S3_HOST}" \
-        put "$OTA_DATA_INITIAL" \
-        s3://${S3_BUCKET}/firmware/latest/ota_data_initial.bin
-fi
 
 echo ""
 echo "✅ Uploaded to S3:"
