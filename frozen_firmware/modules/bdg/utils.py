@@ -368,7 +368,9 @@ async def new_con_cb(conn, req=False):
     if accept or req:
         # TODO: change the app that conn was opened
         # Simulate start of App
-        if isinstance(Screen.current_screen, OptionScreen):
+        from bdg.badge_game import GameLobbyScr
+
+        if isinstance(Screen.current_screen, GameLobbyScr):
             # If at home screen add app on top
             mode = Screen.STACK
         else:
