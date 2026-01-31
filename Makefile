@@ -1,3 +1,4 @@
+
 .PHONY: all submodules micro_init build_firmware clean_frozen_py rebuild_mpy_cross bump_version release
 SHELL := /bin/bash
 
@@ -59,14 +60,31 @@ dist/firmware_$(FW_TYPE).bin: micro_init
 	popd && \
 	cp micropython/ports/esp32/build-$$BOARD-$$BOARD_VARIANT/firmware.bin dist/firmware_$(FW_TYPE).bin
 
-deploy: 
-	FW_TYPE=$(FW_TYPE) source ./set_environ.sh
-	@if [ -z "$$PORT" ]; then \
-		esptool --chip esp32s3 -b 460800 --before=default-reset --after=hard-reset write-flash --flash-size detect 0x0 dist/firmware_$(FW_TYPE).bin; \
-	else \
-		esptool --chip esp32s3 -p $$PORT -b 460800 --before=default-reset --after=hard-reset write-flash --flash-size detect 0x0 dist/firmware_$(FW_TYPE).bin; \
-	fi
+ESPTOOL ?= $(shell command -v esptool || command -v esptool.py)
 
+deploy:
+	@if [ -z "$(ESPTOOL)" ]; then \
+		echo "❌ esptool not found. Install with: pip install esptool"; \
+		exit 1; \
+	fi
+	FW_TYPE=$(FW_TYPE) source ./set_environ.sh && \
+	if [ -z "$$PORT" ]; then \
+		echo "⚠️  PORT not set, relying on auto-detection"; \
+		$(ESPTOOL) --chip esp32s3 -b 460800 \
+			--before default_reset \
+			--after hard_reset \
+			write_flash \
+			--flash_size detect \
+			0x0 dist/firmware_$(FW_TYPE).bin; \
+	else \
+		echo "📦 Flashing to $$PORT"; \
+		$(ESPTOOL) --chip esp32s3 -p $$PORT -b 460800 \
+			--before default_reset \
+			--after hard_reset \
+			write_flash \
+			--flash_size detect \
+			0x0 dist/firmware_$(FW_TYPE).bin; \
+	fi
 repl_with_firmware_dir:
 	@echo "Starting REPL with firmware directory mounted..."
 	FW_TYPE=$(FW_TYPE) source ./set_environ.sh
@@ -74,21 +92,6 @@ repl_with_firmware_dir:
 		$(PYTHON) micropython/tools/mpremote/mpremote.py baud 460800 u0 mount -l firmware; \
 	else \
 		$(PYTHON) micropython/tools/mpremote/mpremote.py baud 460800 connect $$PORT mount -l firmware; \
-	fi
-
-dev_exec:
-	@echo "Executing command with firmware directory mounted..."
-	@if [ -z "$(CMD)" ]; then \
-		echo "Error: No command specified"; \
-		echo "Usage: make dev_exec CMD='<command>'"; \
-		echo "Example: make dev_exec CMD='load_app(\"badge.option_screen\", \"OptionScreen\", with_espnow=True, with_sta=True)'"; \
-		exit 1; \
-	fi
-	FW_TYPE=$(FW_TYPE) source ./set_environ.sh
-	@if [ -z "$$PORT" ]; then \
-		$(PYTHON) micropython/tools/mpremote/mpremote.py baud 460800 u0 mount -l firmware exec '$(CMD)'; \
-	else \
-		$(PYTHON) micropython/tools/mpremote/mpremote.py baud 460800 connect $$PORT mount -l firmware exec '$(CMD)'; \
 	fi
 
          
@@ -155,11 +158,5 @@ release: bump_version
 	echo "To undo this release (if testing):" && \
 	echo "  git tag -d $$NEW_VERSION" && \
 	echo "  git reset --hard HEAD~1"
+	
 
-clear_hw_test_status:
-	@echo "Removing .hw_tested_in_build from badge..."
-	@if [ -z "$$PORT" ]; then \
-		$(PYTHON) micropython/tools/mpremote/mpremote.py baud 460800 u0 rm :/.hw_tested_in_build; \
-	else \
-		$(PYTHON) micropython/tools/mpremote/mpremote.py baud 460800 connect $$PORT rm :/.hw_tested_in_build; \
-	fi
