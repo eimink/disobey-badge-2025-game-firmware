@@ -14,7 +14,7 @@ from bdg.bleds import clear_leds, dimm_gamma, L_PINK
 
 
 class Flashy(Screen):
-    def __init__(self, sm, *args, **kwargs):
+    def __init__(self):
         super().__init__()
 
         # Optional: customize the focus border color
@@ -150,7 +150,7 @@ def badge_game_config():
         "con_id": 5,
         "title": "Flashy",
         "screen_class": Flashy,
-        "screen_args": (),  # Connection passed separately by framework
+        "screen_args": (), 
         "multiplayer": False,
         "description": "Name tag with flashy LEDs",
     }
