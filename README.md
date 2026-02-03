@@ -35,6 +35,7 @@ A MicroPython firmware project for electronic badges. This repository manages th
    - Press `F1` and select "Dev Containers: Reopen in Container"
    - Select the devcontainer type you want to use: Linux, MacOs or MacOs - Rootless
    - Wait for the container to build and setup
+   - Open new terminal inside container with `Terminal: New Terminal Window` 
 
 #### macOS Note
 
