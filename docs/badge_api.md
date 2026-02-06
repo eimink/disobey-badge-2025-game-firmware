@@ -42,6 +42,8 @@ A development utility function for loading and testing applications/games.
 >>> load_app("bdg.games.flashy", "Flashy")
 ```
 
+**Note:** For REPL usage details, see the [official mpremote documentation](https://docs.micropython.org/en/latest/reference/mpremote.html).
+
 **Quick Execute (Without REPL):**
 
 You can also use the `make dev_exec` target to execute `load_app()` commands without entering the REPL:

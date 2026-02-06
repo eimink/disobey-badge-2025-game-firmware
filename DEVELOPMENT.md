@@ -96,6 +96,8 @@ cd firmware
 python ../micropython/tools/mpremote/mpremote.py baud 460800 u0 mount -l .
 ```
 
+**Note:** See the [official mpremote documentation](https://docs.micropython.org/en/latest/reference/mpremote.html) for complete usage details.
+
 #### macOS (On Host Machine)
 
 ⚠️ **Important**: On macOS, USB devices cannot be mounted into Docker containers. You must run mpremote commands on your **host machine** (outside the container).
@@ -113,6 +115,8 @@ python ../micropython/tools/mpremote/mpremote.py baud 460800 connect /dev/tty.us
 ```
 
 **Note**: Replace `/dev/tty.usbserial-XXX` with your actual device. Find it with: `ls /dev/tty.usbserial-*`
+
+For complete mpremote usage, see the [official mpremote documentation](https://docs.micropython.org/en/latest/reference/mpremote.html).
 
 ### Starting the Badge UI
 

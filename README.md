@@ -76,6 +76,8 @@ make deploy
 ```
 Then use `make repl_with_firmware_dir` on your host to connect to the badge.
 
+For mpremote usage details, see the [official mpremote documentation](https://docs.micropython.org/en/latest/reference/mpremote.html).
+
 If you encounter issues, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for solutions.
 
 ## Firmware Versions

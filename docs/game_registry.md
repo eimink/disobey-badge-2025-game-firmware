@@ -69,16 +69,22 @@ def badge_game_config():
 
 ### Step 4: Register in Package __init__.py
 
-Add your game module name to the package's `__all__` list:
-
-**For development** (`/firmware/badge/games/__init__.py`):
-```python
-__all__ = ["tictac", "reaction_game", "rps", "your_game"]
-```
+**For development** (`/firmware/badge/games/`):
+- ✅ **No action needed!** Games are automatically discovered via filesystem scanning
+- The `__all__` list is optional and not required for development
 
 **For frozen firmware** (`/frozen_firmware/modules/bdg/games/__init__.py`):
+- ⚠️ **REQUIRED:** Add your game module name to the `__all__` list
+- Frozen modules use a virtual filesystem that doesn't support directory listing
+
 ```python
-__all__ = ["your_game"]
+# Example: frozen_firmware/modules/bdg/games/__init__.py
+__all__ = [
+    "tictac",
+    "reaction_solo_game",
+    "flashy",
+    "your_game",  # Add your new game here
+]
 ```
 
 ### Step 5: Test

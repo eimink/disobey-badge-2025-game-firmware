@@ -251,7 +251,7 @@ Screen.back()                                     # Return to previous screen
 Use `change_app()` for game navigation to prevent screen stacking issues:
 
 ```python
-from badge.games import change_app
+from bdg.utils import change_app
 
 class GameMenuScreen(Screen):
     def __init__(self):
@@ -267,7 +267,7 @@ class GameMenuScreen(Screen):
 Create navigation buttons using the helper function:
 
 ```python
-from badge.games import fwdbutton
+from bdg.utils import fwdbutton
 
 class GameScreen(Screen):
     def __init__(self):
@@ -574,6 +574,8 @@ make repl_with_firmware_dir
 The `load_app()` function automatically initializes all required badge components (buttons, network, display) if not already initialized, so you can use it immediately after boot.
 
 **Note:** For multiplayer games that require connection between two badges, the workflow for using `load_app()` to establish connections needs to be tested and documented. Currently, `load_app()` works well for single-player testing and casual modes.
+
+For complete mpremote usage details, see the [official mpremote documentation](https://docs.micropython.org/en/latest/reference/mpremote.html).
 
 ### Testing Multiplayer Games with Two Badges
 
