@@ -269,6 +269,11 @@ class NowListener(object):
 
     __espnow: aioespnow.AIOESPNow = None
     con_cb = def_con_cb
+    
+    # Malformed message tracking: {mac: (count, first_timestamp)}
+    malformed_counter = {}
+    # Blocked MACs: {mac: block_expiry_timestamp}
+    blocked_macs = {}
 
     def __init__(self, e, con_cb=None):
         if not NowListener.__espnow:
@@ -276,6 +281,29 @@ class NowListener(object):
         if con_cb:
             NowListener.con_cb = con_cb
 
+    def _track_malformed_message(self, mac):
+        """Track malformed messages and block MAC if threshold exceeded."""
+        current_time = time()
+        mac_hex = ":" .join(f"{byte:02x}" for byte in mac)
+        
+        if mac in NowListener.malformed_counter:
+            count, first_time = NowListener.malformed_counter[mac]
+            
+            # Reset counter if more than 10 seconds have passed
+            if current_time - first_time > 10:
+                NowListener.malformed_counter[mac] = (1, current_time)
+            else:
+                count += 1
+                NowListener.malformed_counter[mac] = (count, first_time)
+                
+                # Block if threshold exceeded (3 malformed in 10 seconds)
+                if count >= 3:
+                    block_until = current_time + 30  # Block for 30 seconds
+                    NowListener.blocked_macs[mac] = block_until
+                    print(f"Blocking MAC {mac_hex} for 30s (>= 3 malformed msgs)")
+        else:
+            NowListener.malformed_counter[mac] = (1, current_time)
+    
     def ack_msg(self, mac, msg_id):
         self.out_q.put_nowait(OutQueAck(mac, msg_id))
         # start sender task to eat the out_q
@@ -283,7 +311,7 @@ class NowListener(object):
             self._sender_t = asyncio.create_task(self._sender())
 
     async def cleanup_task(self):
-        """Periodically cleanup stale badges from last_seen."""
+        """Periodically cleanup stale badges from last_seen and blocked MACs."""
         try:
             while True:
                 await asyncio.sleep(5)  # Check every 5 seconds
@@ -291,6 +319,16 @@ class NowListener(object):
                 if removed > 0:
                     print(f"Cleaned up {removed} stale badge(s)")
                     self.update_event.set()  # Notify UI to update
+                
+                # Cleanup expired blocked MACs
+                current_time = time()
+                expired_blocks = [mac for mac, expiry in NowListener.blocked_macs.items() if current_time > expiry]
+                for mac in expired_blocks:
+                    del NowListener.blocked_macs[mac]
+                    if mac in NowListener.malformed_counter:
+                        del NowListener.malformed_counter[mac]
+                    mac_hex = ":".join(f"{byte:02x}" for byte in mac)
+                    print(f"Unblocked MAC {mac_hex} - block expired")
         except Exception as e:
             print(f"cleanup_task error: {e}")
 
@@ -305,6 +343,15 @@ class NowListener(object):
             if mac is None:
                 continue
 
+            # Check if MAC is blocked
+            if mac in NowListener.blocked_macs:
+                if time() < NowListener.blocked_macs[mac]:
+                    # Still blocked, silently ignore
+                    continue
+                else:
+                    # Block expired, cleanup will handle removal
+                    pass
+
             rssi = self.__espnow.peers_table[mac][0]
             if rssi < -70:
                 continue
@@ -315,12 +362,14 @@ class NowListener(object):
             except Exception as e:
                 mac_hex = ":".join(f"{byte:02x}" for byte in mac)
                 print(f"NowListener: fatal deserialization from {mac_hex}: {e}")
+                self._track_malformed_message(mac)
                 continue
 
             if incm_msg is None:
                 mac_hex = ":".join(f"{byte:02x}" for byte in mac)
                 head = msg[:32] if isinstance(msg, (bytes, bytearray)) else b""
                 print(f"Ignoring malformed msg from {mac_hex} len={len(msg)} head={head.hex()}")
+                self._track_malformed_message(mac)
                 continue
 
             print(f">>>{mac}:{incm_msg}")
