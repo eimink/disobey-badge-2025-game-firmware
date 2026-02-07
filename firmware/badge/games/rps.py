@@ -107,7 +107,6 @@ class RpsScreen(Screen):
         self.my_weapon = None
         self.their_weapon = None
         self.round_resolved = False
-
         self.game = RpsGame()
 
         # -----------------
@@ -140,14 +139,9 @@ class RpsScreen(Screen):
         self.rb = RadioButtons(DARKGREEN, self.play_round)
         for t in table:
             self.rb.add_button(
-                self.wribut,
-                80,
-                col,
-                textcolor=WHITE,
-                fgcolor=GREEN,
-                height=40,
-                width=55,
-                **t,
+                self.wribut, 80, col,
+                textcolor=WHITE, fgcolor=GREEN,
+                height=40, width=55, **t
             )
             col += 65
 
@@ -160,10 +154,8 @@ class RpsScreen(Screen):
     # -----------------------------
     # Lifecycle / Connection
     # -----------------------------
-
     def on_open(self):
         Beacon.suspend(True)
-
         if self.conn and not hasattr(self.conn, "_rps_reader_started"):
             self.conn._rps_reader_started = True
             asyncio.create_task(self.read_messages())
@@ -172,7 +164,7 @@ class RpsScreen(Screen):
         try:
             self.conn.send_app_msg(Nickname(my_nick), sync=False)
         except Exception as e:
-            print("Failed to send nickname:", e)
+            print("Failed to send Nickname:", e)
 
     def on_hide(self):
         Beacon.suspend(False)
@@ -186,10 +178,13 @@ class RpsScreen(Screen):
 
             if msg.msg_type == "RpsMove":
                 self.handle_opponent_move(msg.weapon)
+
             elif msg.msg_type == "MatchOver":
                 self.display_final_winner_remote(msg.winner)
+
             elif msg.msg_type == "Nickname":
                 self.opponent_nick = msg.nick or "Opponent"
+
             elif msg.msg_type == "ConTerm":
                 from bdg.screens.scan_screen import ScannerScreen
                 Screen.change(ScannerScreen, mode=Screen.REPLACE)
@@ -198,7 +193,6 @@ class RpsScreen(Screen):
     # -----------------------------
     # UI Helpers
     # -----------------------------
-
     def update_score(self):
         self.score_label.value(
             f"You: {self.game.scores['player']} / "
@@ -207,12 +201,13 @@ class RpsScreen(Screen):
 
     def set_waiting_text(self):
         last = f"{self.game.last_result}. " if self.game.last_result else ""
+
         if self.my_weapon and not self.their_weapon:
             self.info.value(f"You chose {self.my_weapon}. Waiting for opponent.")
         elif self.their_weapon and not self.my_weapon:
             self.info.value("Opponent has chosen. Pick already.")
         else:
-            self.info.value(f"{last}- pick again.")
+            self.info.value(f"{last}Pick again.")
 
     def reset_round_state(self):
         self.my_weapon = None
@@ -224,10 +219,21 @@ class RpsScreen(Screen):
     # -----------------------------
     # Player Input
     # -----------------------------
-
     def play_round(self, button, player_weapon):
-        if not self.ready_for_input or self.round_resolved or self.my_weapon is not None:
+        # Debounce: ignore if we already picked this round
+        if self.my_weapon is not None:
+            print("IGNORED duplicate LOCAL PICK")
             return
+
+        if not self.ready_for_input or self.round_resolved:
+            print("IGNORED because not ready")
+            return
+
+        print("LOCAL PICK:", player_weapon,
+            "ready_for_input=", self.ready_for_input,
+            "round_resolved=", self.round_resolved,
+            "my_weapon=", self.my_weapon,
+            "their_weapon=", self.their_weapon)
 
         self.ready_for_input = False
         self.my_weapon = player_weapon
@@ -238,53 +244,69 @@ class RpsScreen(Screen):
             print("Failed to send RpsMove:", e)
 
         if self.their_weapon and not self.round_resolved:
-            self.resolve_round()
+            asyncio.create_task(self.resolve_round())
         else:
             self.set_waiting_text()
 
     # -----------------------------
     # Opponent Move
     # -----------------------------
-
     def handle_opponent_move(self, weapon):
+        print("REMOTE PICK:", weapon, "round_resolved=", self.round_resolved,
+            "my_weapon=", self.my_weapon, "their_weapon=", self.their_weapon)
+
         self.their_weapon = weapon
 
         if self.my_weapon and not self.round_resolved:
-            self.resolve_round()
+            asyncio.create_task(self.resolve_round())
         else:
             self.set_waiting_text()
 
     # -----------------------------
-    # Round Resolution
+    # Round Resolution (ASYNC)
     # -----------------------------
-
-    def resolve_round(self):
+    async def resolve_round(self):
         if not self.my_weapon or not self.their_weapon:
             return
 
         result, winner = self.game.resolve_round(
             self.my_weapon, self.their_weapon
         )
-        self.apply_result(result, winner)
+        await self.apply_result(result, winner)
 
-    def apply_result(self, result, winner):
+    # -----------------------------
+    # Apply Result (ASYNC)
+    # -----------------------------
+    async def apply_result(self, result, winner):
         self.round_resolved = True
 
         if winner == "tie":
-            text = f"You: {self.my_weapon}, Opponent: {self.their_weapon}. {result}! Tie!"
+            text = "Tie. Pick again."
         elif winner == "player":
-            text = f"You: {self.my_weapon}, Opponent: {self.their_weapon}. {result}! You win!"
+            text = (
+                f"You: {self.my_weapon}, Opponent: {self.their_weapon}. "
+                f"{result}! You win!"
+            )
         else:
-            text = f"You: {self.my_weapon}, Opponent: {self.their_weapon}. {result}! You lose!"
+            text = (
+                f"You: {self.my_weapon}, Opponent: {self.their_weapon}. "
+                f"{result}! You lose!"
+            )
 
         self.info.value(text)
         self.round_label.value(f"Round {self.game.round_count}")
         self.update_score()
 
-        # Only reset for non-tie rounds if game not finished
+        # -----------------------------
+        # Non‑tie logic
+        # -----------------------------
         if winner != "tie":
-            if self.game.scores["player"] >= 2 or self.game.scores["opponent"] >= 2:
+            if (
+                self.game.scores["player"] >= 2
+                or self.game.scores["opponent"] >= 2
+            ):
                 side = self.game.determine_final_winner()
+
                 if side == "player":
                     final_winner = Config.config["espnow"]["nick"]
                 elif side == "opponent":
@@ -300,24 +322,29 @@ class RpsScreen(Screen):
                 self.display_final_winner(final_winner)
             else:
                 self.reset_round_state()
-        else:
-            # Tie: allow players to pick again
-            self.my_weapon = None
-            self.their_weapon = None
-            self.round_resolved = False
-            self.ready_for_input = True
-            self.set_waiting_text()
 
+            return
+
+        # -----------------------------
+        # Tie logic (ASYNC DELAY)
+        # -----------------------------
+        self.my_weapon = None
+        self.their_weapon = None
+        self.round_resolved = False
+        self.ready_for_input = False
+
+        await asyncio.sleep(0.5)
+
+        self.ready_for_input = True
+        self.set_waiting_text()
 
     # -----------------------------
     # Final Winner Screens
     # -----------------------------
-
     def display_final_winner(self, final_winner):
         from .winner_screen import WinScr
 
         side = self.game.determine_final_winner()
-
         if side == "player":
             message2 = "You won!"
         elif side == "opponent":
