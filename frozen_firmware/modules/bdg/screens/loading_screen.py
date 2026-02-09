@@ -97,6 +97,14 @@ class LoadingScreen(Screen):
         except Exception as e:
             print(f"LoadingScreen: Listen error: {e}")
 
+    def should_send_cancel(self):
+        """Check if we should send cancel (user backed out, not cancelled or completed)"""
+        return (not self.cancelled and 
+                not self.completed and 
+                self.conn and 
+                self.conn.active and 
+                not self.conn.closed)
+
     def on_hide(self):
         """Called when screen is hidden/exited - send cancellation to other badge"""
         print(f"LoadingScreen: on_hide called, cancelled={self.cancelled}, completed={self.completed}")
@@ -115,7 +123,7 @@ class LoadingScreen(Screen):
                 pass
         
         # Only send cancel if user backed out (not if countdown finished or already cancelled)
-        if not self.cancelled and not self.completed and self.conn and self.conn.active and not self.conn.closed:
+        if self.should_send_cancel():
             from bdg.msg import CancelActivityMsg
             print("LoadingScreen: Sending cancel to other badge")
             # Set cancelled BEFORE sending to prevent any race conditions

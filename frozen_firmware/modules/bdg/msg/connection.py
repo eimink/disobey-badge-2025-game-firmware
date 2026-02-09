@@ -267,7 +267,7 @@ class NowListener(object):
     __cleanup_task = None
     _sender_t = None
     connections = {}
-    delivered = deque([], 100)  # Track last 100 messages to prevent re-delivery
+    delivered = deque([], 50)  # Track last 50 messages to prevent re-delivery
     last_seen = BadgeAdrDict(max_size=20, stale_multiplier=2.6)
 
     update_event = asyncio.Event()
