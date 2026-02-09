@@ -9,5 +9,6 @@ since os.listdir() doesn't work on the virtual .frozen filesystem.
 __all__ = [
     "tictac",
     "reaction_solo_game",
+    "reaction_multi_game",
     "flashy",
 ]

@@ -503,7 +503,7 @@ def badge_game_config():
     """
     return {
         "con_id": 2,
-        "title": "Reaction Game (Dev)",
+        "title": "Reaction Game",
         "screen_class": ReactionGameScr,
         "screen_args": (),  # Connection passed separately by framework
         "multiplayer": True,
