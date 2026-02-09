@@ -9,7 +9,7 @@ from bdg.widgets.hidden_active_widget import HiddenActiveWidget
 import random
 from bdg.msg.connection import Connection, Beacon
 from bdg.asyncbutton import ButtonEvents, ButAct
-from bdg.msg import AppMsg, BadgeMsg
+from bdg.msg import AppMsg, BadgeMsg, CancelActivityMsg
 
 
 @AppMsg.register
@@ -214,6 +214,7 @@ class ReactionGameScr(Screen):
         self.opponent_score = None
         self.my_final_score = None
         self.waiting_for_opponent = False
+        self.cancelled = False
         
         super().__init__()
         self.wri = CWriter(ssd, font10, GREEN, BLACK, verbose=False)
@@ -288,6 +289,16 @@ class ReactionGameScr(Screen):
     def on_hide(self):
         self.gs = self.STATE_GAME_PAUSED
         print("screen hidden")
+        
+        # Send cancellation message if leaving early (not already cancelled by other badge)
+        if self.conn and not self.conn.closed:
+            if not self.cancelled and self.gs != self.STATE_GAME_OVER:
+                try:
+                    msg = CancelActivityMsg()
+                    self.conn.send_app_msg(msg, sync=False)
+                    print("ReactionGame: Sent cancel to other badge")
+                except Exception as e:
+                    print(f"ReactionGame: Failed to send cancel: {e}")
         # Don't cleanup here - let the end screen handle it
 
     async def cont_sqnc(self):
@@ -360,6 +371,27 @@ class ReactionGameScr(Screen):
         print("Starting message reading loop")
         async for msg in self.conn.get_msg_aiter():
             print(f"Received message: {msg.msg_type}")
+            
+            # Handle cancellation from other badge
+            if msg.msg_type == "CancelActivityMsg":
+                print("ReactionGame: Received cancel from other badge - opponent forfeited")
+                self.cancelled = True
+                self.gs = self.STATE_GAME_OVER
+                # Opponent forfeited, we win!
+                current_points = self.game.points() if self.game else 0
+                await asyncio.sleep(0.5)
+                Screen.change(
+                    ReactionGameMultiplayerEndScr,
+                    mode=Screen.REPLACE,
+                    kwargs={
+                        "points": current_points,
+                        "conn": self.conn,
+                        "opponent_score": 0,
+                        "result": "won",
+                        "waiting": False
+                    }
+                )
+                return
             
             if msg.msg_type == "ReactionStart":
                 # Received opponent's seed

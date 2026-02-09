@@ -89,9 +89,11 @@ class LoadingScreen(Screen):
                     Screen.back()
                     return
                 
-                # Put non-cancel messages back for potential game use
-                print(f"LoadingScreen: Not a cancel message ({msg.msg_type}), putting back")
+                # Put non-cancel messages back for game screen to handle
+                print(f"LoadingScreen: Not a cancel message ({msg.msg_type}), putting back and stopping reader")
                 self.conn.in_q.put_nowait(msg)
+                # Stop reading - let the game screen handle these messages
+                return
         except asyncio.CancelledError:
             print("LoadingScreen: Listen task cancelled")
         except Exception as e:
