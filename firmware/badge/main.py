@@ -17,8 +17,6 @@ from gui.core.colors import *
 from gui.core.ugui import Screen, quiet
 
 from hardware_setup import BtnConfig, LED_PIN, LED_AMOUNT, LED_ACTIVATE_PIN
-from .games.reaction_game import ReactionGameScr
-from .games.rps import RpsScreen
 from bdg.badge_game import start_game
 
 # from .sprite import Sprite
