@@ -86,12 +86,12 @@ def load_app(
     Load and display an app/game screen for testing in REPL.
 
     Usage examples:
-        load_app("badge.games.reaction_game", "ReactionGameScr", args=(None, True))
-        load_app("badge.games.tictac", "TicTacToe", args=(None,))
+        load_app("bdg.games.reaction_game", "ReactionGameScr", args=(None, True))
+        load_app("bdg.games.tictac", "TicTacToe", args=(None,))
         load_app("bdg.screens.ota", "OTAScreen", with_espnow=True, with_sta=True, kwargs={"fw_version": "1.0.0", "ota_config": Config.config["ota"]})
 
     Args:
-        import_path: Module path like "badge.games.reaction_game" or "bdg.games.something"
+        import_path: Module path like "badge.games.something" or "bdg.games.something"
         class_name: Name of the screen class (if None, tries to infer from module)
         with_espnow: Whether to prepend espnow instance to args
         with_sta: Whether to prepend sta instance to args

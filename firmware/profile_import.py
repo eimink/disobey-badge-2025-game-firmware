@@ -109,7 +109,7 @@ def profile_imports():
 
     checkpoint("import bdg.utils.change_app")
 
-    from badge.games.reaction_game import ReactionGameScr
+    from bdg.games.reaction_game import ReactionGameScr
 
     checkpoint("import ReactionGameScr")
 

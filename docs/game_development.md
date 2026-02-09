@@ -649,8 +649,8 @@ make repl_with_firmware_dir
 # Badge will boot and show the main screen
 
 # 3. Use load_app() to quickly load your game
->>> load_app("badge.games.reaction_game", "ReactionGameScr", args=(None, True))
->>> load_app("badge.games.tictac", "TicTacToe", with_espnow=True, args=(None,))
+>>> load_app("bdg.games.reaction_game", "ReactionGameScr", args=(None, True))
+>>> load_app("bdg.games.tictac", "TicTacToe", with_espnow=True, args=(None,))
 >>> load_app("bdg.screens.ota", "OTAScreen", with_espnow=True, with_sta=True,
 ...          kwargs={"fw_version": "1.0.0", "ota_config": config.config["ota"]})
 
