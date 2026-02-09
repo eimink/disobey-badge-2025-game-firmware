@@ -163,3 +163,77 @@ clear_hw_test_status:
 	else \
 		$(PYTHON) micropython/tools/mpremote/mpremote.py baud 460800 connect $$PORT rm :/.hw_tested_in_build; \
 	fi
+
+# Image conversion to MicroPython format
+# Usage: make convert_image SOURCE_IMAGE=path/to/image.png TARGET_PY=path/to/output.py [WIDTH=320] [HEIGHT=170] [DITHER=Burke] [FORMAT=RGB565_I]
+convert_image:
+	@if [ -z "$(SOURCE_IMAGE)" ]; then \
+		echo "Error: SOURCE_IMAGE not specified"; \
+		echo ""; \
+		echo "Usage: make convert_image SOURCE_IMAGE=<path> TARGET_PY=<path> [WIDTH=320] [HEIGHT=170] [DITHER=Burke] [FORMAT=RGB565_I]"; \
+		echo ""; \
+		echo "Parameters:"; \
+		echo "  SOURCE_IMAGE - Path to source image (PNG, JPG, BMP, etc.)"; \
+		echo "  TARGET_PY    - Path to output Python file"; \
+		echo "  WIDTH        - Target width in pixels (default: 320)"; \
+		echo "  HEIGHT       - Target height in pixels (default: 170)"; \
+		echo "  DITHER       - Dithering algorithm: Atkinson, Burke, Sierra, FS, None (default: Burke)"; \
+		echo "  FORMAT       - Color format: RGB565_I (default), RGB565, or GS8"; \
+		echo ""; \
+		echo "Examples:"; \
+		echo "  make convert_image SOURCE_IMAGE=boot.png TARGET_PY=frozen_firmware/modules/images/boot.py"; \
+		echo "  make convert_image SOURCE_IMAGE=boot.png TARGET_PY=frozen_firmware/modules/images/boot.py DITHER=Atkinson"; \
+		echo "  make convert_image SOURCE_IMAGE=logo.jpg TARGET_PY=firmware/logo.py WIDTH=128 HEIGHT=64"; \
+		echo "  make convert_image SOURCE_IMAGE=icon.png TARGET_PY=firmware/icon.py FORMAT=RGB565"; \
+		echo ""; \
+		echo "See docs/image_conversion.md for detailed information."; \
+		exit 1; \
+	fi
+	@if [ -z "$(TARGET_PY)" ]; then \
+		echo "Error: TARGET_PY not specified"; \
+		echo "Usage: make convert_image SOURCE_IMAGE=<path> TARGET_PY=<path>"; \
+		exit 1; \
+	fi
+	@if [ ! -f "$(SOURCE_IMAGE)" ]; then \
+		echo "Error: Source image '$(SOURCE_IMAGE)' not found"; \
+		exit 1; \
+	fi
+	@echo "Converting image: $(SOURCE_IMAGE) → $(TARGET_PY)"
+	@WIDTH=$${WIDTH:-320}; \
+	HEIGHT=$${HEIGHT:-170}; \
+	DITHER=$${DITHER:-Burke}; \
+	FORMAT=$${FORMAT:-RGB565_I}; \
+	TEMP_PPM=$$(mktemp --suffix=.ppm); \
+	echo "  Dimensions: $${WIDTH}x$${HEIGHT}"; \
+	echo "  Format: $${FORMAT}"; \
+	echo "  Dithering: $${DITHER}"; \
+	if command -v convert >/dev/null 2>&1; then \
+		echo "  Converting to PPM format..."; \
+		convert "$(SOURCE_IMAGE)" -resize "$${WIDTH}x$${HEIGHT}!" "$$TEMP_PPM" || { echo "Error: ImageMagick conversion failed"; rm -f "$$TEMP_PPM"; exit 1; }; \
+	else \
+		echo "Error: ImageMagick 'convert' command not found"; \
+		echo "Please install ImageMagick: apt-get install imagemagick"; \
+		exit 1; \
+	fi; \
+	echo "  Converting to MicroPython format..."; \
+	if [ "$$FORMAT" = "RGB565_I" ]; then \
+		$(PYTHON) libs/micropython-micro-gui/utils/img_cvt.py \
+			"$$TEMP_PPM" \
+			"$(TARGET_PY)" \
+			--rgb565 \
+			--invert-rgb565 \
+			--dither "$$DITHER" || { echo "Error: img_cvt.py conversion failed"; rm -f "$$TEMP_PPM"; exit 1; }; \
+	elif [ "$$FORMAT" = "RGB565" ]; then \
+		$(PYTHON) libs/micropython-micro-gui/utils/img_cvt.py \
+			"$$TEMP_PPM" \
+			"$(TARGET_PY)" \
+			--rgb565 \
+			--dither "$$DITHER" || { echo "Error: img_cvt.py conversion failed"; rm -f "$$TEMP_PPM"; exit 1; }; \
+	else \
+		$(PYTHON) libs/micropython-micro-gui/utils/img_cvt.py \
+			"$$TEMP_PPM" \
+			"$(TARGET_PY)" \
+			--dither "$$DITHER" || { echo "Error: img_cvt.py conversion failed"; rm -f "$$TEMP_PPM"; exit 1; }; \
+	fi; \
+	rm -f "$$TEMP_PPM"; \
+	echo "✅ Image converted successfully: $(TARGET_PY)"

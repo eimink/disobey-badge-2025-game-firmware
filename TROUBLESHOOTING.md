@@ -15,6 +15,7 @@ This document contains solutions to common problems you might encounter when wor
 - [Hardware Issues](#hardware-issues)
   - [Display Not Working](#display-not-working)
   - [Button Input Not Responding](#button-input-not-responding)
+  - [Images Showing Wrong/Inverted Colors](#images-showing-wronginverted-colors)
 - [General Troubleshooting Tips](#general-troubleshooting-tips)
   - [Clean Build](#clean-build)
   - [Environment Variables](#environment-variables)
@@ -169,6 +170,24 @@ Replace `/dev/ttyUSB0` with your actual device port.
    ```python
    import tests.badge_gui
    ```
+
+### Images Showing Wrong/Inverted Colors
+
+**Problem:** Images display with inverted colors (yellow appears white, blue appears orange, etc.)
+
+**Cause:** Incorrect image format - using RGB565 instead of RGB565_I
+
+**Solution:**
+
+Convert images using RGB565_I format (inverted RGB565):
+
+```bash
+make convert_image SOURCE_IMAGE=your_image.png TARGET_PY=frozen_firmware/modules/images/boot.py
+```
+
+The default format is RGB565_I which is correct for the badge. If you explicitly used `FORMAT=RGB565`, remove it or change to `FORMAT=RGB565_I`.
+
+See [docs/image_conversion.md](docs/image_conversion.md) for detailed information.
 
 ## General Troubleshooting Tips
 

@@ -74,6 +74,21 @@ There are currently two versions of firmware:
 - **`/libs/`**: MicroPython related submodules. These modules are partly used by linking relevant files or modules into `firmware` or `frozen_firmware` folders
 - **`/micropython/`**: MicroPython firmware build environment. This will include all the needed parts like IDF, actual Express IDF build environment.
 
+## Development Dependencies
+
+### Image Processing Tools
+
+For converting images to the badge display format, **ImageMagick** is required:
+
+```bash
+# Inside the dev container
+apt-get update && apt-get install -y imagemagick
+```
+
+This is used by the `make convert_image` task to convert PNG, JPG, and other formats to the badge-compatible format. See [docs/image_conversion.md](docs/image_conversion.md) for details on image conversion.
+
+**Note**: ImageMagick should already be available in the dev container after the first setup, but if not, install it as shown above.
+
 ## Python Firmware Development
 
 ### Connecting with the Board and Starting the UI

@@ -19,7 +19,9 @@ def copy_img_to_mvb(img_file, ssd):
 
 from framebuf import RGB565, GS4_HMSB, GS8
 
-size = {RGB565: 2, GS4_HMSB: 0, GS8: 1}
+# RGB565_I (mode 10) is the inverted RGB565 format - same byte size as RGB565
+RGB565_I = 10
+size = {RGB565: 2, GS4_HMSB: 0, GS8: 1, RGB565_I: 2}
 
 
 def blit(ssd, img, row=0, col=0):
@@ -29,9 +31,13 @@ def blit(ssd, img, row=0, col=0):
     mvb = ssd.mvb  # Memoryview of display's bytearray.
     irows = min(img.rows, ssd.height - row)  # Clip rows
     icols = min(img.cols, ssd.width - col)  # Clip cols
-    if (mode := img.mode) != ssd.mode:
+    mode = img.mode
+    # Allow RGB565_I (mode 10) images to work with RGB565 (mode 1) displays
+    if mode == RGB565_I and ssd.mode == RGB565:
+        mode = RGB565
+    if mode != ssd.mode:
         raise ValueError("Image and display have differing modes.")
-    sz = size[mode]  # Allow for no. of bytes per pixel
+    sz = size[img.mode]  # Use original img.mode for size lookup
     ibytes = scale(img.cols, sz)  # Bytes per row of unclipped image data
     dbytes = scale(icols, sz)  # Bytes per row to output to display
     dwidth = scale(ssd.width, sz)  # Display width in bytes
