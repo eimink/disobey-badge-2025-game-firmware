@@ -36,6 +36,10 @@ class MultiplayerGameSelectionScreen(SimpleListScreen):
             wri_status, 35, 2, 316, bdcolor=False, justify=Label.CENTRE
         )
     
+    def on_hide(self):
+        """Clear status label when screen hides"""
+        self.s_lbl.value("")
+    
     def get_initial_elements(self):
         """Return list of multiplayer game titles"""
         games = [
