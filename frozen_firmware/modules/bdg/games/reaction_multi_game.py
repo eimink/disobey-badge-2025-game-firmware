@@ -169,17 +169,20 @@ class ReactionGameMultiplayerEndScr(Screen):
     async def _show_result(self, opponent_score: int, result: str):
         """Helper to show result screen without blocking message loop"""
         await asyncio.sleep_ms(10)  # Brief delay to ensure message processing completes
-        Screen.change(
-            ReactionGameMultiplayerEndScr,
-            mode=Screen.REPLACE,
-            kwargs={
-                "points": self.my_score,
-                "conn": self.conn,
-                "opponent_score": opponent_score,
-                "result": result,
-                "waiting": False
-            }
-        )
+        try:
+            Screen.change(
+                ReactionGameMultiplayerEndScr,
+                mode=Screen.REPLACE,
+                kwargs={
+                    "points": self.my_score,
+                    "conn": self.conn,
+                    "opponent_score": opponent_score,
+                    "result": result,
+                    "waiting": False
+                }
+            )
+        except Exception as e:
+            print(f"Error changing screen in _show_result: {e}")
 
     def on_hide(self):
         # Resume beacon and cleanup
@@ -265,7 +268,8 @@ class ReactionGameScr(Screen):
         # TODO: Should we show popup to confirm leaving game?
         if self.gs == self.STATE_GAME_ONGOING:
             print("game ongoing, can't exit!")
-        elif self.gs == self.STATE_GAME_OVER:
+        else:
+            # Allow back when game is over or paused (after ending)
             Screen.back()
 
     def after_open(self):
@@ -287,18 +291,26 @@ class ReactionGameScr(Screen):
         self.conn.send_app_msg(ReactionStart(my_seed), sync=False)
 
     def on_hide(self):
-        self.gs = self.STATE_GAME_PAUSED
         print("screen hidden")
         
         # Send cancellation message if leaving early (not already cancelled by other badge)
-        if self.conn and not self.conn.closed:
-            if not self.cancelled and self.gs != self.STATE_GAME_OVER:
-                try:
-                    msg = CancelActivityMsg()
-                    self.conn.send_app_msg(msg, sync=False)
-                    print("ReactionGame: Sent cancel to other badge")
-                except Exception as e:
-                    print(f"ReactionGame: Failed to send cancel: {e}")
+        # Check state BEFORE modifying it
+        should_send_cancel = (self.conn and 
+                              not self.conn.closed and 
+                              not self.cancelled and 
+                              self.gs != self.STATE_GAME_OVER)
+        
+        # Only set to PAUSED if game isn't over - preserve GAME_OVER state
+        if self.gs != self.STATE_GAME_OVER:
+            self.gs = self.STATE_GAME_PAUSED
+        
+        if should_send_cancel:
+            try:
+                msg = CancelActivityMsg()
+                self.conn.send_app_msg(msg, sync=False)
+                print("ReactionGame: Sent cancel to other badge")
+            except Exception as e:
+                print(f"ReactionGame: Failed to send cancel: {e}")
         # Don't cleanup here - let the end screen handle it
 
     async def cont_sqnc(self):
@@ -380,17 +392,20 @@ class ReactionGameScr(Screen):
                 # Opponent forfeited, we win!
                 current_points = self.game.points() if self.game else 0
                 await asyncio.sleep(0.5)
-                Screen.change(
-                    ReactionGameMultiplayerEndScr,
-                    mode=Screen.REPLACE,
-                    kwargs={
-                        "points": current_points,
-                        "conn": self.conn,
-                        "opponent_score": 0,
-                        "result": "won",
-                        "waiting": False
-                    }
-                )
+                try:
+                    Screen.change(
+                        ReactionGameMultiplayerEndScr,
+                        mode=Screen.REPLACE,
+                        kwargs={
+                            "points": current_points,
+                            "conn": self.conn,
+                            "opponent_score": 0,
+                            "result": "won",
+                            "waiting": False
+                        }
+                    )
+                except Exception as e:
+                    print(f"Error changing screen: {e}")
                 return
             
             if msg.msg_type == "ReactionStart":
@@ -434,17 +449,20 @@ class ReactionGameScr(Screen):
             result = "draw"
         
         print(f"Game result: {result} (Me: {my_score}, Opponent: {opp_score})")
-        Screen.change(
-            ReactionGameMultiplayerEndScr,
-            mode=Screen.REPLACE,
-            kwargs={
-                "points": my_score,
-                "conn": self.conn,
-                "opponent_score": opp_score,
-                "result": result,
-                "waiting": False
-            }
-        )
+        try:
+            Screen.change(
+                ReactionGameMultiplayerEndScr,
+                mode=Screen.REPLACE,
+                kwargs={
+                    "points": my_score,
+                    "conn": self.conn,
+                    "opponent_score": opp_score,
+                    "result": result,
+                    "waiting": False
+                }
+            )
+        except ValueError as e:
+            print(f"Screen.change failed in show_multiplayer_result: {e}")
 
     async def stop_game(self):
         self.gs = self.STATE_GAME_OVER
@@ -474,17 +492,20 @@ class ReactionGameScr(Screen):
             print("Waiting for opponent to finish")
             self.waiting_for_opponent = True
             await asyncio.sleep_ms(100)
-            Screen.change(
-                ReactionGameMultiplayerEndScr,
-                mode=Screen.REPLACE,
-                kwargs={
-                    "points": points,
-                    "conn": self.conn,
-                    "opponent_score": None,
-                    "result": None,
-                    "waiting": True
-                }
-            )
+            try:
+                Screen.change(
+                    ReactionGameMultiplayerEndScr,
+                    mode=Screen.REPLACE,
+                    kwargs={
+                        "points": points,
+                        "conn": self.conn,
+                        "opponent_score": None,
+                        "result": None,
+                        "waiting": True
+                    }
+                )
+            except ValueError as e:
+                print(f"Screen.change failed in stop_game: {e}")
 
 
 class RGame:
